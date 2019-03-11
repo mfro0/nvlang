@@ -1,6 +1,7 @@
 /* Resource Datei Indizes fÅr NVLANG */
 
 #define POPUP            0   /* Formular/Dialog */
+#define PANEL            1   /* BOX in Baum POPUP */
 #define ENGLISH_US       2   /* STRING in Baum POPUP */
 #define GERMAN           3   /* STRING in Baum POPUP */
 #define FRENCH           4   /* STRING in Baum POPUP */
