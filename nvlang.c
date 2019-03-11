@@ -23,18 +23,7 @@ struct NVM
 static const char *lang[] = { "en", "de", "fr", "XX", "es", "it", NULL };
 static const char *KEYB[] = { "us", "de", "fr", "gb", "es", "it", "se", "ch-fr", "ch-de", NULL };
 
-static const char rsrc_name[] = "nvlang.rsc";
-
-static void print_nvram(struct NVM *buffer)
-{
-	printf( "  LANG: %s, KEYB: %s,\n  DATE: %s, CLOCK %s\n\n",
-		lang[buffer->language],
-		KEYB[buffer->keyboard]
-		 );
-	
-	printf("\n");
-
-}
+#define NVLANG_RSC "nvlang.rsc"
 
 static void reset_nvram(struct NVM *buffer)
 {
@@ -51,6 +40,11 @@ static void set_nvram(struct NVM *buffer)
 	NVMaccess( 1, 0, sizeof(*buffer), buffer );
 }
 
+static void do_popup(OBJECT *tree, short originator)
+{
+
+}
+
 int main(int argc, char *argv[])
 {
 	struct NVM nvm;
@@ -62,12 +56,11 @@ int main(int argc, char *argv[])
 	OBJECT *popup;
 
 	apid = appl_init();
-	if (0 == rsrc_load(rsrc_name))
+	if (0 == rsrc_load(NVLANG_RSC))
 	{
-		char noload[] = "[1][Resource file %s could not be loaded][OK]";
-		char errstr[80];
-		sprintf(errstr, noload, rsrc_name);
-		form_alert(1, errstr);
+		char norsc[] = "[1][Resource file " NVLANG_RSC "could not be loaded][OK]";
+		
+		form_alert(1, norsc);
 		while (1) evnt_mesag(msgbuf);
 	}
 
@@ -102,6 +95,11 @@ int main(int argc, char *argv[])
 				exitobj = form_do(nvselect, ROOT) & 0x7fff;
 				while (exitobj != OK && exitobj != CANCEL)
 				{
+					if (exitobj == LANG)
+						do_popup(nvselect, LANG);
+					else if (exitobj == KBD_LANG)
+						do_popup(nvselect, KBD_LANG);
+					
 
 					exitobj = form_do(nvselect, ROOT) & 0x7fff;
 				}
@@ -121,7 +119,6 @@ int main(int argc, char *argv[])
 
 	}
 	get_nvram( &nvm );
-	print_nvram(&nvm);
 
 	return 0;
 }
