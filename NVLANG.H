@@ -27,5 +27,6 @@
 #define KBD_LANG         4   /* BUTTON in Baum NVSELECT */
 #define OK               5   /* BUTTON in Baum NVSELECT */
 #define CANCEL           6   /* BUTTON in Baum NVSELECT */
+#define RESTART          8   /* BUTTON in Baum NVSELECT */
 
 #define TEST             2   /* Formular/Dialog */

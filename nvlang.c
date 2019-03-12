@@ -40,6 +40,29 @@ static void set_nvram(struct NVM *buffer)
 	NVMaccess( 1, 0, sizeof(*buffer), buffer );
 }
 
+static GRECT ob_size(OBJECT *tree, short obj)
+{
+    short x, y;
+    short width;
+    short height;
+    short framesize;
+
+    x = tree[obj].ob_x;
+    y = tree[obj].ob_y;
+    width = tree[obj].ob_width;
+    height = tree[obj].ob_height;
+    framesize = tree[obj].ob_spec.obspec.framesize;
+
+    x = framesize > 0 ? x - framesize : x;
+    y = framesize > 0 ? y - framesize : y;
+    width = framesize > 0 ? width + framesize * 2 : width;
+    height = framesize > 0 ? height + framesize * 2 : height;
+
+    GRECT rect = { x, y, width, height };
+
+    return rect;
+}
+
 static short do_popup(OBJECT *popup, OBJECT *dial, short originator)
 {
 	short x, y;
@@ -51,9 +74,14 @@ static short do_popup(OBJECT *popup, OBJECT *dial, short originator)
 	popup[ROOT].ob_x = (x + dial[originator].ob_width / 2) - popup[ROOT].ob_width / 2;
 	popup[ROOT].ob_y = (y + dial[originator].ob_height / 2) - popup[ROOT].ob_height / 2;
 
+    GRECT sz = ob_size(popup, ROOT);
+
 	form_dial(FMD_START, 0, 0, 0, 0,
-              popup->ob_x, popup->ob_y,
-			  popup->ob_width, popup->ob_height);
+              sz.g_x, sz.g_y, sz.g_w, sz.g_h);
+
+    // printf("obj = { %d, %d, %d, %d }\r\n", popup->ob_x, popup->ob_y, popup->ob_width, popup->ob_height);
+    // printf("sz  = { %d, %d, %d, %d }\r\n", sz.g_x, sz.g_y, sz.g_w, sz.g_h);
+
 	objc_draw(popup, ROOT, MAX_DEPTH,
 	          popup->ob_x, popup->ob_y,
 			  popup->ob_width, popup->ob_height);
@@ -62,8 +90,9 @@ static short do_popup(OBJECT *popup, OBJECT *dial, short originator)
 	popup[exit_obj].ob_state &= ~OS_SELECTED;
 
 	form_dial(FMD_FINISH, 0, 0, 0, 0,
-	          popup->ob_x, popup->ob_y,
-			  popup->ob_width, popup->ob_height);
+              sz.g_x, sz.g_y,
+              sz.g_w, sz.g_h);
+
 	wind_update(END_UPDATE);
 
 	return exit_obj;
@@ -134,6 +163,8 @@ int main(int argc, char *argv[])
 						objc_draw(nvselect, ROOT, MAX_DEPTH,
 						          nvselect->ob_x, nvselect->ob_y,
 								  nvselect->ob_width, nvselect->ob_height);
+
+                        nvm.language = ind - ENGLISH_US;
 					}
 					else if (exitobj == KBD_LANG)
 					{
@@ -143,9 +174,14 @@ int main(int argc, char *argv[])
 						objc_draw(nvselect, ROOT, MAX_DEPTH,
 						          nvselect->ob_x, nvselect->ob_y,
 								  nvselect->ob_width, nvselect->ob_height);
+
+                        nvm.keyboard = ind - ENGLISH_US;
 					}
 
 					exitobj = form_do(nvselect, ROOT) & 0x7fff;
+
+                    if (exitobj == OK)
+                        set_nvram(&nvm);
 				}
 
 				form_dial(FMD_FINISH, 0, 0, 0, 0,
@@ -160,7 +196,6 @@ int main(int argc, char *argv[])
 			case AC_CLOSE:
 				;
 		}
-
 	}
 
 	return 0;
