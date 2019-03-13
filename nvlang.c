@@ -114,26 +114,14 @@ static short do_popup(OBJECT *popup, OBJECT *dial, short originator)
 	return exit_obj;
 }
 
-int main(int argc, char *argv[])
+
+void do_dialog(void)
 {
-	struct NVM nvm;
-	int apid;
-	short msgbuf[8];
-	short resource;
-	short evnt;
 	OBJECT *nvselect;
 	OBJECT *popup;
+	struct NVM nvm;
+	short exitobj;
 
-	apid = appl_init();
-	if (0 == rsrc_load(NVLANG_RSC))
-	{
-		char norsc[] = "[1][Resource file " NVLANG_RSC "could not be loaded][OK]";
-		
-		form_alert(1, norsc);
-		while (1) evnt_mesag(msgbuf);
-	}
-
-	menu_register(apid, "  NVLANG");
 	rsrc_gaddr(R_TREE, NVSELECT, &nvselect);
 	rsrc_gaddr(R_TREE, POPUP, &popup);
 
@@ -142,76 +130,105 @@ int main(int argc, char *argv[])
 	nvselect[LANG].ob_spec.free_string = popup[nvm.language + ENGLISH_US].ob_spec.free_string;
 	nvselect[KBD_LANG].ob_spec.free_string = popup[nvm.keyboard + ENGLISH_US].ob_spec.free_string;
 
-	while (1)
-	{
-		evnt = evnt_mesag(msgbuf);
-		switch (msgbuf[0])
-		{
-			short exitobj;
 
-			case AC_OPEN:
-
-				form_center(nvselect, &nvselect->ob_x, &nvselect->ob_y,
-				                      &nvselect->ob_width, &nvselect->ob_height);
+    form_center(nvselect, &nvselect->ob_x, &nvselect->ob_y,
+                &nvselect->ob_width, &nvselect->ob_height);
 	
-				wind_update(BEG_UPDATE);
-				form_dial(FMD_START, 0, 0, 0, 0,
-				                     nvselect->ob_x, nvselect->ob_y,
-									 nvselect->ob_width, nvselect->ob_height);
-				form_dial(FMD_GROW, 0, 0, 2, 2,
-				                    nvselect->ob_x, nvselect->ob_y,
-									nvselect->ob_width, nvselect->ob_height);
+	wind_update(BEG_UPDATE);
+	form_dial(FMD_START, 0, 0, 0, 0,
+              nvselect->ob_x, nvselect->ob_y,
+ 			  nvselect->ob_width, nvselect->ob_height);
+	form_dial(FMD_GROW, 0, 0, 2, 2,
+	          nvselect->ob_x, nvselect->ob_y,
+			  nvselect->ob_width, nvselect->ob_height);
 				
-				objc_draw(nvselect, ROOT, MAX_DEPTH, nvselect->ob_x, nvselect->ob_y,
-				                                     nvselect->ob_width, nvselect->ob_height);
-				exitobj = form_do(nvselect, ROOT) & 0x7fff;
-				while (exitobj != OK && exitobj != CANCEL)
-				{
-					short ind;
+	objc_draw(nvselect, ROOT, MAX_DEPTH, nvselect->ob_x, nvselect->ob_y,
+	          nvselect->ob_width, nvselect->ob_height);
+	exitobj = form_do(nvselect, ROOT) & 0x7fff;
+	while (exitobj != OK && exitobj != CANCEL)
+	{
+		short ind;
 
-					if (exitobj == LANG)
-					{
-						ind = do_popup(popup, nvselect, LANG);
-						nvselect[LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
-						nvselect[LANG].ob_state &= ~OS_SELECTED;
-						objc_draw(nvselect, ROOT, MAX_DEPTH,
-						          nvselect->ob_x, nvselect->ob_y,
-								  nvselect->ob_width, nvselect->ob_height);
+		if (exitobj == LANG)
+		{
+			ind = do_popup(popup, nvselect, LANG);
+			nvselect[LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
+			nvselect[LANG].ob_state &= ~OS_SELECTED;
+			objc_draw(nvselect, ROOT, MAX_DEPTH,
+	 	              nvselect->ob_x, nvselect->ob_y,
+					  nvselect->ob_width, nvselect->ob_height);
 
-                        nvm.language = ind - ENGLISH_US;
-					}
-					else if (exitobj == KBD_LANG)
-					{
-						ind = do_popup(popup, nvselect, KBD_LANG);
-						nvselect[KBD_LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
-						nvselect[KBD_LANG].ob_state &= ~OS_SELECTED;
-						objc_draw(nvselect, ROOT, MAX_DEPTH,
-						          nvselect->ob_x, nvselect->ob_y,
-								  nvselect->ob_width, nvselect->ob_height);
-
-                        nvm.keyboard = ind - ENGLISH_US;
-					}
-
-					exitobj = form_do(nvselect, ROOT) & 0x7fff;
-
-                    if (exitobj == OK)
-                        set_nvram(&nvm);
-				}
-
-				form_dial(FMD_FINISH, 0, 0, 0, 0,
-				                      nvselect->ob_x, nvselect->ob_y,
-									  nvselect->ob_width, nvselect->ob_height);
-				form_dial(FMD_SHRINK, nvselect->ob_x, nvselect->ob_y,
-				                      nvselect->ob_width, nvselect->ob_height,
-									  0, 0, 2, 2);
-				wind_update(END_UPDATE);
-				nvselect[exitobj].ob_state &= ~OS_SELECTED;
-				break;	
-				
-			case AC_CLOSE:
-				;
+            nvm.language = ind - ENGLISH_US;
 		}
+		else if (exitobj == KBD_LANG)
+		{
+			ind = do_popup(popup, nvselect, KBD_LANG);
+			nvselect[KBD_LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
+			nvselect[KBD_LANG].ob_state &= ~OS_SELECTED;
+			objc_draw(nvselect, ROOT, MAX_DEPTH,
+			          nvselect->ob_x, nvselect->ob_y,
+					  nvselect->ob_width, nvselect->ob_height);
+
+            nvm.keyboard = ind - ENGLISH_US;
+		}
+
+		exitobj = form_do(nvselect, ROOT) & 0x7fff;
+
+        if (exitobj == OK)
+            set_nvram(&nvm);
 	}
+
+	form_dial(FMD_FINISH, 0, 0, 0, 0,
+	          nvselect->ob_x, nvselect->ob_y,
+	 	      nvselect->ob_width, nvselect->ob_height);
+	form_dial(FMD_SHRINK, nvselect->ob_x, nvselect->ob_y,
+	          nvselect->ob_width, nvselect->ob_height,
+			  0, 0, 2, 2);
+	wind_update(END_UPDATE);
+	nvselect[exitobj].ob_state &= ~OS_SELECTED;
+}
+
+int main(int argc, char *argv[])
+{
+	int apid;
+	short msgbuf[8];
+	short resource;
+	short evnt;
+    extern short _app;
+
+
+	apid = appl_init();
+
+	if (0 == rsrc_load(NVLANG_RSC))
+	{
+		char norsc[] = "[1][Resource file " NVLANG_RSC "could not be loaded][OK]";
+		
+		form_alert(1, norsc);
+		while (1) evnt_mesag(msgbuf);
+	}
+
+    if (!_app)
+    {
+	    menu_register(apid, "  NVLANG");
+
+
+	    while (1)
+	    {
+		    evnt = evnt_mesag(msgbuf);
+		    switch (msgbuf[0])
+		    {
+			    case AC_OPEN:
+
+                    do_dialog();
+				    break;	
+				
+			    case AC_CLOSE:
+				    ;
+		    }
+	    }
+    }
+    else
+        do_dialog();
 
 	return 0;
 }
