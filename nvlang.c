@@ -3,6 +3,7 @@
 #include <string.h>
 #include <mint/osbind.h>
 #include <gem.h>
+#include "popup.h"
 
 #include "NVLANG.H"
 
@@ -19,29 +20,6 @@ struct NVM
 	short vmode;
 	unsigned char scsi;
 };
-
-#if 0
-/* Structure for passing menu data */
-typedef struct _menu
-{
-	OBJECT *mn_tree;		/* Object tree of the menu */
-	WORD mn_menu;			/* Parent of the menu items*/
-	WORD mn_item;			/* Starting menu item */
-	WORD mn_scroll;			/* scroll flag for the menu*/
-	WORD mn_keystate;		/* Key State */
-} MENU;
-
-
-/* Structure for the Menu Settings */
-typedef struct _mn_set
-{
-	LONG Display;			/* The display delay */
-	LONG Drag;				/* The drag delay */
-	LONG Delay;				/* The Arrow Delay */
-	LONG Speed;				/* The scroll speed delay */
-	WORD Height;			/* The menu scroll height */
-} MN_SET;
-#endif
 
 #define NVLANG_RSC "nvlang.rsc"
 
@@ -60,72 +38,7 @@ static void set_nvram(struct NVM *buffer)
 	(void) NVMaccess(1, 0, sizeof(*buffer), buffer);
 }
 
-static short obj_num_children(OBJECT *tree, short obj)
-{
-	short head = tree[obj].ob_head;
-	short next = head;
-	short count = 0;
 
-	while (next != obj)
-	{
-		next = tree[next].ob_next;
-		count++;
-	}
-
-	return count;
-}
-
-static short do_popup(MENU *pm, OBJECT *dial, short originator)
-{
-	short x, y;
-	short button, state;
-	short exit_obj;
-	OBJECT *popup = pm->mn_tree;
-	OBJECT *o = &popup[pm->mn_menu];
-	const int num_items = 5;
-
-	char upstr[] = " \x01 ";
-	char dnstr[] = " \x02 ";
-
-	wind_update(BEG_UPDATE);
-	objc_offset(dial, originator, &x, &y);
-
-
-	o->ob_x = (x + dial[originator].ob_width / 2) - o->ob_width / 2;
-	o->ob_y = (y + dial[originator].ob_height / 2) - o->ob_height / 2;
-
-	short first;
-	short last;
-	char *first_str;
-	char *last_str;
-
-	first = o->ob_head;
-	last = o->ob_tail;
-	first_str = popup[first].ob_spec.free_string;
-	last_str = popup[last].ob_spec.free_string;
-
-	popup[first].ob_spec.free_string = upstr;
-	popup[last].ob_spec.free_string = dnstr;
-	
-	form_dial(FMD_START, 0, 0, 0, 0,
-              o->ob_x, o->ob_y,
-			  o->ob_width, o->ob_height);
-
-	objc_draw(popup, ROOT, MAX_DEPTH,
-	          o->ob_x, o->ob_y,
-			  o->ob_width, o->ob_height);
-
-	exit_obj = form_do(popup, ROOT) & 0x7fff;
-	popup[exit_obj].ob_state &= ~OS_SELECTED;
-
-	form_dial(FMD_FINISH, 0, 0, 0, 0,
-              o->ob_x, o->ob_y,
-              o->ob_width, o->ob_height);
-
-	wind_update(END_UPDATE);
-
-	return exit_obj;
-}
 
 
 void do_dialog(void)
