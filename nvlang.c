@@ -20,29 +20,68 @@ struct NVM
 	unsigned char scsi;
 };
 
+#if 0
+/* Structure for passing menu data */
+typedef struct _menu
+{
+	OBJECT *mn_tree;		/* Object tree of the menu */
+	WORD mn_menu;			/* Parent of the menu items*/
+	WORD mn_item;			/* Starting menu item */
+	WORD mn_scroll;			/* scroll flag for the menu*/
+	WORD mn_keystate;		/* Key State */
+} MENU;
+
+
+/* Structure for the Menu Settings */
+typedef struct _mn_set
+{
+	LONG Display;			/* The display delay */
+	LONG Drag;				/* The drag delay */
+	LONG Delay;				/* The Arrow Delay */
+	LONG Speed;				/* The scroll speed delay */
+	WORD Height;			/* The menu scroll height */
+} MN_SET;
+#endif
+
 #define NVLANG_RSC "nvlang.rsc"
 
 static void reset_nvram(struct NVM *buffer)
 {
-	NVMaccess(2, 0, sizeof(buffer), buffer);
+	(void) NVMaccess(2, 0, sizeof(buffer), buffer);
 }
 
 static void get_nvram(struct NVM *buffer)
 {
-	NVMaccess(0, 0, sizeof(*buffer), buffer);
+	(void) NVMaccess(0, 0, sizeof(*buffer), buffer);
 }
 
 static void set_nvram(struct NVM *buffer)
 {
-	NVMaccess(1, 0, sizeof(*buffer), buffer);
+	(void) NVMaccess(1, 0, sizeof(*buffer), buffer);
 }
 
-static short do_popup(OBJECT *popup, OBJECT *dial, short originator)
+static short obj_num_children(OBJECT *tree, short obj)
+{
+	short head = tree[obj].ob_head;
+	short next = head;
+	short count = 0;
+
+	while (next != obj)
+	{
+		next = tree[next].ob_next;
+		count++;
+	}
+
+	return count;
+}
+
+static short do_popup(MENU *pm, OBJECT *dial, short originator)
 {
 	short x, y;
 	short button, state;
 	short exit_obj;
-	OBJECT *o = &popup[ROOT];
+	OBJECT *popup = pm->mn_tree;
+	OBJECT *o = &popup[pm->mn_menu];
 	const int num_items = 5;
 
 	char upstr[] = " \x01 ";
@@ -121,13 +160,31 @@ void do_dialog(void)
 
 	exitobj = form_do(nvselect, ROOT) & 0x7fff;
 
-	while (OK != exitobj && CANCEL != exitobj)
+	MENU menu_lang = 
+	{
+		.mn_tree = popup,
+		.mn_menu = ROOT,
+		.mn_item = ENGLISH_US,
+		.mn_scroll = 1,
+		.mn_keystate = 0
+	};
+	
+	MENU menu_kbd =
+	{
+		.mn_tree = popup,
+		.mn_menu = ROOT,
+		.mn_item = ENGLISH_US,
+		.mn_scroll = 1,
+		.mn_keystate = 0
+	};
+	
+	while (exitobj != OK && exitobj != CANCEL)
 	{
 		short ind;
 
-		if (LANG == exitobj)
+		if (exitobj == LANG)
 		{
-			ind = do_popup(popup, nvselect, LANG);
+			ind = do_popup(&menu_lang, nvselect, LANG);
 			nvselect[LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
 			nvselect[LANG].ob_state &= ~OS_SELECTED;
 			objc_draw(nvselect, ROOT, MAX_DEPTH,
@@ -136,9 +193,9 @@ void do_dialog(void)
 
             nvm.language = ind - ENGLISH_US;
 		}
-		else if (KBD_LANG == exitobj)
+		else if (exitobj == KBD_LANG)
 		{
-			ind = do_popup(popup, nvselect, KBD_LANG);
+			ind = do_popup(&menu_kbd, nvselect, KBD_LANG);
 			nvselect[KBD_LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
 			nvselect[KBD_LANG].ob_state &= ~OS_SELECTED;
 			objc_draw(nvselect, ROOT, MAX_DEPTH,
@@ -150,7 +207,7 @@ void do_dialog(void)
 
 		exitobj = form_do(nvselect, ROOT) & 0x7fff;
 
-        if (OK == exitobj)
+        if (exitobj == OK)
             set_nvram(&nvm);
 	}
 
@@ -170,14 +227,12 @@ int main(int argc, char *argv[])
 {
 	int apid;
 	short msgbuf[8];
-	short resource;
-	short evnt;
     extern short _app;
 
 
 	apid = appl_init();
 
-	if (0 == rsrc_load(NVLANG_RSC))
+	if (!rsrc_load(NVLANG_RSC))
 	{
 		char norsc[] = "[1][Resource file " NVLANG_RSC "could not be loaded][OK]";
 		
@@ -185,17 +240,16 @@ int main(int argc, char *argv[])
 		while (1) evnt_mesag(msgbuf);
 	}
 
-    if (!_app)
+    if (!_app)		/* when started as accessory, we must wait to be called from the menu */
     {
 	    menu_register(apid, "  NVLANG");
 
 	    while (1)
 	    {
-		    evnt = evnt_mesag(msgbuf);
+		    evnt_mesag(msgbuf);
 		    switch (msgbuf[0])
 		    {
 			    case AC_OPEN:
-
                     do_dialog();
 				    break;	
 				
@@ -204,8 +258,8 @@ int main(int argc, char *argv[])
 		    }
 	    }
     }
-    else
-        do_dialog();
+    else		/* just fire up straight away otherwise */
+        do_dialog();	
 
 	return 0;
 }

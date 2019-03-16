@@ -1,5 +1,5 @@
 CC=m68k-atari-mint-gcc
-CFLAGS=-nostdlib -O2
+CFLAGS=-nostdlib -O2 -Wall
 
 LIBCMINI=../libcmini/build
 
