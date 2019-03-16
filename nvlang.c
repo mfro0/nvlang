@@ -53,8 +53,16 @@ void do_dialog(void)
 
 	get_nvram(&nvm);
 
+	if (!(nvm.language >= 0 && nvm.language < 20) ||
+	   (!(nvm.keyboard >= 0 && nvm.keyboard < 20)))
+	{
+		/* NVRAM corrupt? */
+		nvm.language = 0;		/* set to US English */
+		nvm.keyboard = 0;
+	}
 	nvselect[LANG].ob_spec.free_string = popup[nvm.language + ENGLISH_US].ob_spec.free_string;
 	nvselect[KBD_LANG].ob_spec.free_string = popup[nvm.keyboard + ENGLISH_US].ob_spec.free_string;
+	
 
 
     form_center(nvselect, &nvselect->ob_x, &nvselect->ob_y,
