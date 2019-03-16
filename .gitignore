@@ -1,2 +1,3 @@
-*.acc
-
+depend
+*.o
+*.prg
