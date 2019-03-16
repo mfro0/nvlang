@@ -130,7 +130,7 @@ short do_popup(MENU *pm, OBJECT *dial, short originator)
 		*/
 		if (pm->mn_item != first)
 		{
-			popup[first].ob_spec.free_string = first_str;
+			popup[pm->mn_item - 1].ob_spec.free_string = first_str;
 			popup->ob_head = first;
 
 			if (exit_obj == pm->mn_item - 1)
