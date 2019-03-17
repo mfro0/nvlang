@@ -63,8 +63,6 @@ void do_dialog(void)
 	nvselect[LANG].ob_spec.free_string = popup[nvm.language + ENGLISH_US].ob_spec.free_string;
 	nvselect[KBD_LANG].ob_spec.free_string = popup[nvm.keyboard + ENGLISH_US].ob_spec.free_string;
 	
-
-
     form_center(nvselect, &nvselect->ob_x, &nvselect->ob_y,
                 &nvselect->ob_width, &nvselect->ob_height);
 	
@@ -105,7 +103,13 @@ void do_dialog(void)
 
 		if (exitobj == LANG)
 		{
-			ind = do_popup(&menu_lang, nvselect, LANG);
+			short x, y;
+
+			objc_offset(nvselect, LANG, &x, &y);
+			y += popup[LANG].ob_height;
+
+			ind = do_popup(&menu_lang, x, y);
+
 			nvselect[LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
 			nvselect[LANG].ob_state &= ~OS_SELECTED;
 			objc_draw(nvselect, ROOT, MAX_DEPTH,
@@ -116,7 +120,11 @@ void do_dialog(void)
 		}
 		else if (exitobj == KBD_LANG)
 		{
-			ind = do_popup(&menu_kbd, nvselect, KBD_LANG);
+			short x, y;
+
+			objc_offset(nvselect, KBD_LANG, &x, &y);
+			y += popup[KBD_LANG].ob_height;
+			ind = do_popup(&menu_kbd, x, y);
 			nvselect[KBD_LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
 			nvselect[KBD_LANG].ob_state &= ~OS_SELECTED;
 			objc_draw(nvselect, ROOT, MAX_DEPTH,
