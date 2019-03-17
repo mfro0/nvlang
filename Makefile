@@ -12,7 +12,7 @@ SRCS= \
 OBJS=$(patsubst %.c,%.o,$(SRCS))
 
 nvlang.prg: $(OBJS)
-	$(CC) $(CFLAGS) -s -o nvlang.prg $(LIBCMINI)/startup.o $? $(LIBS)
+	$(CC) $(CFLAGS) -s -o nvlang.prg $(LIBCMINI)/startup.o $(OBJS) $(LIBS)
 	
 .PHONY:clean
 clean:
