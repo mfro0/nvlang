@@ -180,10 +180,6 @@ short do_popup(MENU *pm, short x, short y)
 		{
 			mn_item_adjust += 1;
 		}
-
-		printf("exit_obj=%d, check=(%d,%d) down_arrow=%d, pm->mn_item=%d\r\n",
-		       exit_obj, pm->mn_item - 1, down_arrow,
-			   down_arrow, pm->mn_item);
 	} while (exit_obj == up_arrow || exit_obj == down_arrow);
 
 	wind_update(END_UPDATE);
