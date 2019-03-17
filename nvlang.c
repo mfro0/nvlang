@@ -82,7 +82,7 @@ void do_dialog(void)
 	MENU menu_lang = 
 	{
 		.mn_tree = popup,
-		.mn_menu = ROOT,
+		.mn_menu = PANEL,
 		.mn_item = ENGLISH_US,
 		.mn_scroll = 1,
 		.mn_keystate = 0
@@ -91,7 +91,7 @@ void do_dialog(void)
 	MENU menu_kbd =
 	{
 		.mn_tree = popup,
-		.mn_menu = ROOT,
+		.mn_menu = PANEL,
 		.mn_item = ENGLISH_US,
 		.mn_scroll = 1,
 		.mn_keystate = 0
