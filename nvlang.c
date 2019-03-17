@@ -106,8 +106,7 @@ void do_dialog(void)
 			short x, y;
 
 			objc_offset(nvselect, LANG, &x, &y);
-			y += popup[LANG].ob_height;
-
+			
 			ind = do_popup(&menu_lang, x, y);
 
 			nvselect[LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
@@ -123,8 +122,9 @@ void do_dialog(void)
 			short x, y;
 
 			objc_offset(nvselect, KBD_LANG, &x, &y);
-			y += popup[KBD_LANG].ob_height;
+			
 			ind = do_popup(&menu_kbd, x, y);
+			
 			nvselect[KBD_LANG].ob_spec.free_string = popup[ind].ob_spec.free_string;
 			nvselect[KBD_LANG].ob_state &= ~OS_SELECTED;
 			objc_draw(nvselect, ROOT, MAX_DEPTH,
