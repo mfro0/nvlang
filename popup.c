@@ -32,7 +32,7 @@ static MN_SET mn_set =
 	0,			/* submenu drag display */
 	0,			/* single click scroll delay */
 	0,			/* continuous scroll delay */
-	5			/* number of displayed items */
+	7			/* number of displayed items */
 };
 
 short do_popup(MENU *pm, short x, short y)
@@ -58,6 +58,7 @@ short do_popup(MENU *pm, short x, short y)
 	short last;
 	char *first_str;
 	char *last_str;
+	short mn_item_adjust = 0;
 
 	first = popup->ob_head;
 	last = popup->ob_tail;
@@ -65,13 +66,15 @@ short do_popup(MENU *pm, short x, short y)
 	short extra_item;
 	do
 	{
-		extra_item = 0;
+		pm->mn_item += mn_item_adjust;
+		extra_item = mn_item_adjust = 0;
+
 		if (pm->mn_item != first)
 		{
 			/*
-			 * mn_item is not the first item to be displayed, thus
+			 * pm->mn_item is not the first item to be displayed, thus
 			 * we need to add an up arrow menu. We save the menu text
-			 * of the menu item immediately before mn_item and temporarily
+			 * of the menu item immediately before pm->mn_item and temporarily
 			 * replace it with our up arrow string
 			 */
 
@@ -108,7 +111,13 @@ short do_popup(MENU *pm, short x, short y)
 			popup->ob_tail = last;
 		}
 		
+		short ob_y = 0;
 		
+		for (int i = popup->ob_head; i <= popup->ob_tail; i++)
+		{
+			popup[i].ob_y = ob_y;
+			ob_y += popup[i].ob_height;
+		}
 		objc_draw(popup, ROOT, MAX_DEPTH,
 				  popup->ob_x, popup->ob_y,
 				  popup->ob_width, popup->ob_height);		
@@ -127,30 +136,37 @@ short do_popup(MENU *pm, short x, short y)
 
 			if (exit_obj == pm->mn_item - 1)
 			{
-				pm->mn_item--;
+				/* up arrow selected */
+				mn_item_adjust -= 1;
 			}
 		}
 
 		if (pm->mn_item + dsp_items - 1 < last)
 		{
+			short downarrow = pm->mn_item + dsp_items - 1 - extra_item;
 			/*
 			 * restore saved menu text of down arrow object
 			 */
-			popup[pm->mn_item + dsp_items - 1 - extra_item].ob_spec.free_string = last_str;
+			popup[downarrow].ob_spec.free_string = last_str;
 			popup->ob_tail = last;
 
-			if (pm->mn_item + dsp_items - 1 - extra_item != last)
+			if (downarrow != last)
 			{
-				popup[pm->mn_item + dsp_items - 1 - extra_item].ob_next = pm->mn_item + dsp_items;
-				popup[pm->mn_item + dsp_items - 1 - extra_item].ob_flags &= ~OF_LASTOB;
+				popup[downarrow].ob_next = pm->mn_item + dsp_items;
+				popup[downarrow].ob_flags &= ~OF_LASTOB;
 			}
 			
-			if (exit_obj == pm->mn_item + dsp_items - 1 - extra_item)
+			if (exit_obj == downarrow)
 			{
-				pm->mn_item++;
+				mn_item_adjust += 1;
 			}
+			if (!extra_item)
+				mn_item_adjust += 1;
 		}
-
+		
+		printf("exit_obj=%d, check=(%d,%d) extra_item=%d, pm->mn_item=%d\r\n",
+		       exit_obj, pm->mn_item - 1, pm->mn_item + dsp_items - 1 - extra_item,
+			   extra_item, pm->mn_item);
 	} while (exit_obj == pm->mn_item - 1 || exit_obj == pm->mn_item + dsp_items - 1 - extra_item);
 
 	wind_update(END_UPDATE);
