@@ -62,26 +62,30 @@ short do_popup(MENU *pm, short x, short y)
 
 	first = popup->ob_head;
 	last = popup->ob_tail;
+	short up_arrow;
+	short down_arrow;
 
-	short extra_item;
 	do
 	{
+		up_arrow = down_arrow = -1;
+
 		pm->mn_item += mn_item_adjust;
-		extra_item = mn_item_adjust = 0;
+		mn_item_adjust = 0;
 
 		if (pm->mn_item != first)
 		{
 			/*
-			 * pm->mn_item is not the first item to be displayed, thus
-			 * we need to add an up arrow menu. We save the menu text
+			 * pm->mn_item is not the first item to be displayed, but further down the menu.
+			 * Thus we need to add an up arrow menu button. We save the menu text
 			 * of the menu item immediately before pm->mn_item and temporarily
 			 * replace it with our up arrow string
 			 */
 
 			first_str = popup[pm->mn_item - 1].ob_spec.free_string;
 			popup[pm->mn_item - 1].ob_spec.free_string = upstr;
-			popup->ob_head = pm->mn_item - 1;
-			extra_item = 1;						/* remember that we added an item */
+
+			up_arrow = pm->mn_item - 1;
+			popup->ob_head = up_arrow;
 		}
 		else
 		{
@@ -89,20 +93,21 @@ short do_popup(MENU *pm, short x, short y)
 		}
 		
 
-		if (pm->mn_item + dsp_items - 1 - extra_item < last)
+		if (pm->mn_item + dsp_items - 1 - (up_arrow > 0 ? 1 : 0) < last)
 		{
 			/*
 			 * now take care about the lower end of the popup. If the last item displayed is not
 			 * the last item of the menu, we temporarily replace its menu text with our down arrow
 			 * text to enable menu scrolling
 			 */
-			last_str = popup[pm->mn_item + dsp_items - 1 - extra_item].ob_spec.free_string;
-			popup[pm->mn_item + dsp_items - 1 - extra_item].ob_spec.free_string = dnstr;
-			
-			popup->ob_tail = pm->mn_item + dsp_items - 1 - extra_item;
-			popup[popup->ob_tail].ob_flags |= OF_LASTOB;
+			down_arrow = pm->mn_item + dsp_items - 1 - (up_arrow > 0 ? 1 : 0);
 
-			popup[pm->mn_item + dsp_items - 1 - extra_item].ob_next = ROOT;
+			last_str = popup[down_arrow].ob_spec.free_string;
+			popup[down_arrow].ob_spec.free_string = dnstr;
+			
+			popup->ob_tail = down_arrow;
+			
+			popup[down_arrow].ob_next = ROOT;
 			
 			popup->ob_height = popup[first].ob_height * dsp_items;
 		}
@@ -113,15 +118,25 @@ short do_popup(MENU *pm, short x, short y)
 		
 		short ob_y = 0;
 		
+		/*
+		 * adjust objects in menu
+		 */
 		for (int i = popup->ob_head; i <= popup->ob_tail; i++)
 		{
 			popup[i].ob_y = ob_y;
 			ob_y += popup[i].ob_height;
 		}
+
+		/*
+		 * draw menu
+		 */
 		objc_draw(popup, ROOT, MAX_DEPTH,
 				  popup->ob_x, popup->ob_y,
 				  popup->ob_width, popup->ob_height);		
 		
+		/*
+		 * FIXME: must go away once scrolling has been sorted out
+		 */
 		exit_obj = form_do(popup, ROOT) & 0x7fff;
 
 		popup[exit_obj].ob_state &= ~OS_SELECTED;
@@ -131,43 +146,45 @@ short do_popup(MENU *pm, short x, short y)
 		*/
 		if (pm->mn_item != first)
 		{
-			popup[pm->mn_item - 1].ob_spec.free_string = first_str;		/* restore saved menu text */
+			popup[up_arrow].ob_spec.free_string = first_str;		/* restore saved menu text */
 			popup->ob_head = first;
 
-			if (exit_obj == pm->mn_item - 1)
-			{
-				/* up arrow selected */
-				mn_item_adjust -= 1;
-			}
 		}
 
 		if (pm->mn_item + dsp_items - 1 < last)
 		{
-			short downarrow = pm->mn_item + dsp_items - 1 - extra_item;
 			/*
 			 * restore saved menu text of down arrow object
 			 */
-			popup[downarrow].ob_spec.free_string = last_str;
+			popup[down_arrow].ob_spec.free_string = last_str;
 			popup->ob_tail = last;
 
-			if (downarrow != last)
-			{
-				popup[downarrow].ob_next = pm->mn_item + dsp_items;
-				popup[downarrow].ob_flags &= ~OF_LASTOB;
-			}
+			popup[down_arrow].ob_next = pm->mn_item + dsp_items - 1;
 			
-			if (exit_obj == downarrow)
-			{
-				mn_item_adjust += 1;
-			}
-			if (!extra_item)
-				mn_item_adjust += 1;
+			//if (up_arrow > 0)
+			//	mn_item_adjust += 1;
 		}
 		
-		printf("exit_obj=%d, check=(%d,%d) extra_item=%d, pm->mn_item=%d\r\n",
-		       exit_obj, pm->mn_item - 1, pm->mn_item + dsp_items - 1 - extra_item,
-			   extra_item, pm->mn_item);
-	} while (exit_obj == pm->mn_item - 1 || exit_obj == pm->mn_item + dsp_items - 1 - extra_item);
+		if (exit_obj == up_arrow)
+		{
+			if (exit_obj == first + 1)
+			{
+				mn_item_adjust -= 2;
+			}
+			else
+			{
+				mn_item_adjust -= 1;
+			}
+		}
+		else if (exit_obj == down_arrow)
+		{
+			mn_item_adjust += 1;
+		}
+
+		printf("exit_obj=%d, check=(%d,%d) down_arrow=%d, pm->mn_item=%d\r\n",
+		       exit_obj, pm->mn_item - 1, down_arrow,
+			   down_arrow, pm->mn_item);
+	} while (exit_obj == up_arrow || exit_obj == down_arrow);
 
 	wind_update(END_UPDATE);
 
