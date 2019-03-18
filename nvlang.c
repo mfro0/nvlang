@@ -23,11 +23,6 @@ struct NVM
 
 #define NVLANG_RSC "nvlang.rsc"
 
-static void reset_nvram(struct NVM *buffer)
-{
-	(void) NVMaccess(2, 0, sizeof(buffer), buffer);
-}
-
 static void get_nvram(struct NVM *buffer)
 {
 	(void) NVMaccess(0, 0, sizeof(*buffer), buffer);

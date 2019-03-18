@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <gem.h>
 #include "popup.h"
 
@@ -16,11 +17,6 @@ static short obj_num_children(OBJECT *tree, short obj)
 	return count;
 }
 
-static short max(const short a, const short b)
-{
-    return (a > b ? a : b);
-}
-
 static short min(const short a, const short b)
 {
 	return (a < b ? a : b);
@@ -32,12 +28,11 @@ static MN_SET mn_set =
 	0,			/* submenu drag display */
 	0,			/* single click scroll delay */
 	0,			/* continuous scroll delay */
-	7			/* number of displayed items */
+	5			/* number of displayed items */
 };
 
 short do_popup(MENU *pm, short x, short y)
 {
-	short button, state;
 	short exit_obj;
 	OBJECT *popup = pm->mn_tree;
 
@@ -56,8 +51,8 @@ short do_popup(MENU *pm, short x, short y)
 
 	short first;
 	short last;
-	char *first_str;
-	char *last_str;
+	char *first_str = NULL;
+	char *last_str = NULL;
 	short mn_item_adjust = 0;
 
 	first = popup->ob_head;
@@ -184,6 +179,5 @@ short do_popup(MENU *pm, short x, short y)
 
 	wind_update(END_UPDATE);
 
-	
 	return exit_obj;
 }
