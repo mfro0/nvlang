@@ -88,7 +88,7 @@ short do_popup(MENU *pm, short x, short y)
 		}
 		
 
-		if (pm->mn_item + dsp_items - 1 - (up_arrow > 0 ? 1 : 0) < last)
+		if (pm->mn_item + dsp_items - 1 + (up_arrow > 0 ? 1 : 0) < last)
 		{
 			/*
 			 * now take care about the lower end of the popup. If the last item displayed is not
@@ -103,13 +103,13 @@ short do_popup(MENU *pm, short x, short y)
 			popup->ob_tail = down_arrow;
 			
 			popup[down_arrow].ob_next = ROOT;
-			
-			popup->ob_height = popup[first].ob_height * dsp_items;
 		}
 		else
 		{
 			popup->ob_tail = last;
 		}
+
+		popup->ob_height = popup[first].ob_height * dsp_items;
 		
 		short ob_y = 0;
 		
